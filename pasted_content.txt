@@ -1,0 +1,195 @@
+Project Title: Development of Gun Drill Machine Standard Time Calculator via Power Apps
+
+1. Project Overview:
+This project involves the creation of a Power Apps-based calculator designed to estimate the standard time required for gun drilling operations. The tool integrates time study results, actual cutting parameters, and machining features, providing a unified and standardized method for time estimation. The aim is to improve routing consistency across manufacturing operations and enable more accurate product costing.
+
+2. Objectives:
+
+Develop an intuitive and efficient Power Apps calculator.
+
+Integrate cutting parameters, tool geometry, and feature-based calculations.
+
+Eliminate discrepancies between routing creators.
+
+Provide a centralized, user-friendly tool accessible to manufacturing personnel.
+
+3. Scope:
+
+Input: Drill size, RPM, feed rate, material grade, length to drill, tool wear considerations, setup time, grinding time, wall thickness inspection.
+
+Output: Standard drilling time per feature or per part.
+
+Users: Routing engineers, manufacturing planners, process engineers.
+
+Deployment: Internal Power Apps platform with access control.
+
+4. Functional Requirements:
+
+UI for entering drill parameters and job-specific data.
+
+Backend logic that interprets and applies formulas from time study tables.
+
+Option to compute total time for multiple features per job.
+
+Ability to export calculated values to Excel.
+
+Historical log of calculated jobs (via Power Automate/SharePoint).
+
+Error handling and input validation.
+
+5. Non-Functional Requirements:
+
+Performance: Must return results within 2 seconds of submission.
+
+Usability: Simple UI design, minimal training required.
+
+Maintainability: Logic must be documented and modular.
+
+Security: Restricted to internal users; editable access for admins only.
+
+6. System Architecture:
+
+Front End: Microsoft Power Apps (Canvas)
+
+Parameter entry fields
+
+Output display card
+
+Dynamic visuals (e.g., gauge or progress bar for drill time)
+
+Data Source: Excel spreadsheet (initial) or migrated SharePoint List
+
+Stores time study data mapped by material, size, and feed
+
+Can be updated without republishing the app
+
+Business Logic Layer:
+
+Conditional rules apply grinding time, setup time, inspection time
+
+RPM and feed rate influence cut time
+
+Total time = (Cutting Time) + (Setup Time) + (Grinding Time) + (Inspection Time)
+
+Automation:
+
+Power Automate flow to save results to SharePoint list
+
+Optional PDF or email export for results summary
+
+7. UI/UX Design:
+
+Main Screen Layout:
+
+Section 1: Job/Part details (dropdown)
+
+Section 2: Drill parameters (input fields)
+
+Section 3: Advanced settings (e.g., grinding cycle frequency)
+
+Section 4: Results panel
+
+Section 5: Export/save controls
+
+Accessibility Features:
+
+Tooltips for each input field
+
+Highlight invalid/missing values
+
+Responsive design for mobile and desktop use
+
+8. Development Plan:
+
+Phase
+
+Activities
+
+Duration
+
+Requirements Gathering
+
+Finalize parameters and logic with engineers
+
+1 week
+
+UI Design
+
+Wireframe in Power Apps + user validation
+
+3 days
+
+Logic Implementation
+
+Configure formulas and conditionals
+
+1 week
+
+Testing & QA
+
+Run test cases and validate results
+
+1 week
+
+Deployment
+
+Share with stakeholders + collect feedback
+
+3 days
+
+Documentation
+
+Create guide + logic documentation
+
+2 days
+
+9. Risks & Mitigation:
+
+Risk: Excel table misalignment or changes
+
+Mitigation: Define strict format; use SharePoint for structure
+
+Risk: Incorrect parameter inputs
+
+Mitigation: Use dropdowns, limits, and warnings
+
+Risk: Power Apps limitations on performance
+
+Mitigation: Optimize logic, minimize screen refresh, use delegation
+
+10. Deliverables:
+
+Gun Drill Time Calculator App — deployed on Power Apps
+
+User Guide — with step-by-step instructions and screenshots
+
+Admin Guide — managing data tables, updating logic
+
+System Documentation — architecture diagram, logic flow, dependencies
+
+Test Report — log of tested input scenarios and output verification
+
+Change Log Template — for maintaining future updates
+
+11. Future Enhancements:
+
+API Integration with ERP for job routing auto-fill
+
+Role-based access control and approval workflows
+
+AI-assisted feed & speed recommendations based on past data
+
+Visual drill path simulation or animation
+
+12. Appendix:
+
+A. Time Study Data Source: GUN DRILL TIME CALC-XL.xlsx
+
+B. Inventory List Reference: Gundrill inventory list_15.05.2024.xls
+
+C. Reference Drawings: Tool Geometry and Standard Lengths
+
+D. Screenshots of App Pages (to be included post-implementation)
+
+E. Flowchart: Time Calculation Logic
+

@@ -1,0 +1,203 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --radius: 0.75rem;
+  --background: #fff;
+  --foreground: #222;
+  --primary: #CC0000;
+  --primary-foreground: #fff;
+  --secondary: #fff;
+  --secondary-foreground: #CC0000;
+  --muted: #f3f4f6;
+  --muted-foreground: #666;
+  --accent: #CC0000;
+  --accent-foreground: #fff;
+  --destructive: #b91c1c;
+  --border: #f3f4f6;
+  --input: #f3f4f6;
+  --ring: #CC0000;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', 'Roboto', Arial, sans-serif;
+}
+
+.halliburton-header {
+  background: #fff;
+  color: #CC0000;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-align: center;
+  padding: 1.2rem 0 0.7rem 0;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px 0 rgba(204,0,0,0.04);
+  border-bottom: 2px solid #f3f4f6;
+}
+
+.halliburton-footer {
+  background: #fff;
+  color: #CC0000;
+  text-align: center;
+  padding: 0.5rem 0;
+  font-size: 1rem;
+  border-top: 1px solid #f3f4f6;
+  box-shadow: 0 -2px 8px 0 rgba(204,0,0,0.04);
+  width: 100%;
+  z-index: 50;
+}
+
+.btn-primary, .btn-primary:focus, .btn-primary:active {
+  background: #CC0000;
+  color: #fff;
+  border: 2px solid #CC0000;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 4px 0 rgba(204,0,0,0.06);
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-primary:hover {
+  background: #a30000;
+  color: #fff;
+}
+
+.card {
+  border: 1.5px solid #f3f4f6;
+  border-radius: 0.75rem;
+  background: #fff;
+  color: #222;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.04);
+}
+
+input, select {
+  border: 1.5px solid #f3f4f6;
+  color: #222;
+  background: #fff;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  transition: border 0.2s;
+}
+
+input:focus, select:focus {
+  border-color: #CC0000;
+  outline: none;
+}
+
+label {
+  color: #CC0000;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.tabs-list {
+  background: #f3f4f6;
+  border-bottom: 1.5px solid #f3f4f6;
+  border-radius: 0.75rem 0.75rem 0 0;
+}
+
+.tabs-trigger {
+  color: #CC0000;
+  font-weight: 600;
+  background: transparent;
+  border-radius: 0.75rem 0.75rem 0 0;
+  transition: background 0.2s, color 0.2s, border-bottom 0.2s;
+  border-bottom: 2.5px solid transparent;
+}
+
+.tabs-trigger[aria-selected="true"] {
+  background: #fff;
+  color: #CC0000;
+  font-weight: 700;
+  border-bottom: 2.5px solid #CC0000;
+  box-shadow: 0 2px 8px 0 rgba(204,0,0,0.04);
+}
+
+.results-card {
+  background: #CC0000;
+  color: #fff;
+  border-radius: 0.75rem;
+  padding: 2rem 1.5rem;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.04);
+}
+
+.results-card .card-title,
+.results-card .card-description {
+  color: #fff;
+}
+
+.results-card .badge {
+  background: #fff;
+  color: #CC0000;
+}
+
+/* Responsive styles */
+@media (max-width: 900px) {
+  .container {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+  .halliburton-header {
+    font-size: 1.3rem;
+    padding: 0.7rem 0 0.5rem 0;
+  }
+  .results-card {
+    padding: 1rem 0.5rem;
+    font-size: 1rem;
+  }
+  .tabs-list {
+    flex-direction: column;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+  }
+  .tabs-trigger {
+    font-size: 1rem;
+    padding: 0.5rem 0.7rem;
+  }
+  .card {
+    padding: 0.5rem;
+    font-size: 1rem;
+  }
+}
+@media (max-width: 600px) {
+  .container {
+    padding-left: 0.2rem !important;
+    padding-right: 0.2rem !important;
+  }
+  .halliburton-header {
+    font-size: 1rem;
+    padding: 0.5rem 0 0.3rem 0;
+  }
+  .results-card {
+    padding: 0.5rem 0.2rem;
+    font-size: 0.95rem;
+  }
+  .tabs-list {
+    flex-direction: column;
+    gap: 0.2rem;
+    border-radius: 0.75rem;
+  }
+  .tabs-trigger {
+    font-size: 0.95rem;
+    padding: 0.3rem 0.5rem;
+  }
+  .card {
+    padding: 0.2rem;
+    font-size: 0.95rem;
+  }
+  .flex, .grid, .gap-4, .gap-6, .gap-8 {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+  .text-4xl, .text-2xl, .text-lg {
+    font-size: 1.1rem !important;
+  }
+  .w-16, .h-16 {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+  }
+}
