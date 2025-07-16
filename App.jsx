@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress.jsx'
 import { Separator } from '@/components/ui/separator.jsx'
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts'
 import './App.css'
+import FMJCalculator from './src/components/FMJCalculator';
 
 function App() {
   const [activeTab, setActiveTab] = useState('calculator')
@@ -28,8 +29,10 @@ function App() {
     wallThicknessInspection: false,
     customSetupTime: '',
     customGrindingTime: '',
-    grindingFrequency: '10'
+    grindingFrequency: '10',
+    grindingIntervalOverride: '' // NEW: user can override grinding interval in inches
   })
+  const [includeFMJPort, setIncludeFMJPort] = useState(false);
   
   const [results, setResults] = useState(null)
   const [isCalculating, setIsCalculating] = useState(false)
@@ -51,14 +54,13 @@ function App() {
     '13CR',
     '25CR',
     '41XX',
-    'Aluminum',
-    'Steel',
-    'Stainless Steel',
-    'Cast Iron',
-    'Titanium',
-    'Brass',
-    'Copper'
+    'INC-718',
+    'INC-925',
+    'S13CR'
   ]
+
+  const lowChromeMaterials = ['13CR', 'S13CR', '41XX'];
+  const highChromeMaterials = ['25CR', 'INC-718', 'INC-925'];
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -90,34 +92,55 @@ function App() {
           const softMaterials = ['13CR', '41XX', 'Aluminum', 'Brass', 'Copper']
           const hardMaterials = ['25CR', 'Stainless Steel', 'Cast Iron', 'Titanium']
           const material = formData.materialGrade
-          let grindingInterval = 10 // default to soft
-          if (hardMaterials.includes(material)) grindingInterval = 5
+          // High chrome materials
+          const highChromeMaterials = ['25CR', 'INC-718', 'INC-925']
+          // Default grinding interval logic
+          let grindingInterval = 10 // default for low chrome/soft
+          if (highChromeMaterials.includes(material) || ['Stainless Steel', 'Cast Iron', 'Titanium'].includes(material)) grindingInterval = 5
+          // Use user override if provided and valid
+          if (formData.grindingIntervalOverride && !isNaN(parseFloat(formData.grindingIntervalOverride)) && parseFloat(formData.grindingIntervalOverride) > 0) {
+            grindingInterval = parseFloat(formData.grindingIntervalOverride)
+          }
 
           // Calculate grinding intervals and time
           const grindingIntervals = Math.ceil(lengthToDrill / grindingInterval)
           const grindingTime = grindingIntervals * 7.0
 
-          const setupTime = 5.0
+          // Setup time (per feature)
+          const setupTimePerFeature = 5.0
+          const totalSetupTime = setupTimePerFeature * numberOfFeatures
+
           const inspectionTime = 2.0
 
           // Total time for all features
           const totalCuttingTime = cuttingTime * numberOfFeatures
           const totalGrindingTime = grindingTime
-          const totalSetupTime = setupTime
           const totalInspectionTime = inspectionTime
 
-          const totalTime = totalCuttingTime + totalGrindingTime + totalSetupTime + totalInspectionTime
+          // FMJ Port Time logic
+          let fmjPortTime = 0;
+          if (includeFMJPort) {
+            if (lowChromeMaterials.includes(material)) {
+              fmjPortTime = 30;
+            } else if (highChromeMaterials.includes(material)) {
+              fmjPortTime = 45;
+            }
+          }
+
+          const totalTime = totalCuttingTime + totalGrindingTime + totalSetupTime + totalInspectionTime + fmjPortTime;
 
           setResults({
             cuttingTimePerFeature: cuttingTime.toFixed(2),
             totalCuttingTime: totalCuttingTime.toFixed(2),
-            setupTime: totalSetupTime.toFixed(2),
+            setupTimePerFeature: setupTimePerFeature.toFixed(2),
+            totalSetupTime: totalSetupTime.toFixed(2),
             grindingTimePerFeature: (grindingTime / grindingIntervals).toFixed(2),
             totalGrindingTime: totalGrindingTime.toFixed(2),
             inspectionTime: totalInspectionTime.toFixed(2),
             toolWearAdditionalTime: "0.00",
             totalStandardTime: totalTime.toFixed(2),
-            numberOfFeatures: numberOfFeatures
+            numberOfFeatures: numberOfFeatures,
+            fmjPortTime: fmjPortTime > 0 ? fmjPortTime.toFixed(2) : undefined
           })
 
           setActiveTab('results')
@@ -162,7 +185,8 @@ function App() {
       wallThicknessInspection: false,
       customSetupTime: '',
       customGrindingTime: '',
-      grindingFrequency: '10'
+      grindingFrequency: '10',
+      grindingIntervalOverride: ''
     })
     setResults(null)
   }
@@ -179,14 +203,14 @@ function App() {
 
   const pieData = results ? [
     { name: 'Cutting Time', value: parseFloat(results.totalCuttingTime), color: '#3b82f6' },
-    { name: 'Setup Time', value: parseFloat(results.setupTime), color: '#10b981' },
+    { name: 'Setup Time', value: parseFloat(results.totalSetupTime), color: '#10b981' },
     { name: 'Grinding Time', value: parseFloat(results.totalGrindingTime), color: '#f59e0b' },
     { name: 'Inspection Time', value: parseFloat(results.inspectionTime), color: '#ef4444' }
   ] : []
 
   const barData = results ? [
     { name: 'Cutting', time: parseFloat(results.totalCuttingTime) },
-    { name: 'Setup', time: parseFloat(results.setupTime) },
+    { name: 'Setup', time: parseFloat(results.totalSetupTime) },
     { name: 'Grinding', time: parseFloat(results.totalGrindingTime) },
     { name: 'Inspection', time: parseFloat(results.inspectionTime) }
   ] : []
@@ -402,6 +426,26 @@ function App() {
                       />
                       <Label htmlFor="wallThickness">Wall Thickness Inspection</Label>
                     </div>
+                    {/* FMJ Port Toggle */}
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={includeFMJPort}
+                        onChange={e => setIncludeFMJPort(e.target.checked)}
+                      />
+                      <Label htmlFor="includeFMJPort">Include FMJ Port Operations</Label>
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="grindingIntervalOverride">Grinding Interval Override (inches)</Label>
+                    <Input
+                      id="grindingIntervalOverride"
+                      type="number"
+                      step="0.1"
+                      min="0.1"
+                      placeholder="Auto by material"
+                      value={formData.grindingIntervalOverride}
+                      onChange={(e) => handleInputChange('grindingIntervalOverride', e.target.value)}
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -477,8 +521,12 @@ function App() {
                           <span className="font-semibold">{results.totalCuttingTime} min</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>Setup Time:</span>
-                          <span className="font-semibold">{results.setupTime} min</span>
+                          <span>Setup Time (per feature):</span>
+                          <span className="font-semibold">{results.setupTimePerFeature} min</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Total Setup Time:</span>
+                          <span className="font-semibold">{results.totalSetupTime} min</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Grinding Time (per feature):</span>
@@ -496,6 +544,12 @@ function App() {
                           <div className="flex justify-between">
                             <span>Tool Wear Additional Time:</span>
                             <span className="font-semibold">{results.toolWearAdditionalTime} min</span>
+                          </div>
+                        )}
+                        {results.fmjPortTime && (
+                          <div className="flex justify-between">
+                            <span>FMJ Port Time:</span>
+                            <span className="font-semibold">{results.fmjPortTime} min</span>
                           </div>
                         )}
                         <Separator />
@@ -628,7 +682,7 @@ function App() {
                             <div>
                               <div><b>Total Time:</b> {entry.totalStandardTime} min</div>
                               <div><b>Cutting:</b> {entry.totalCuttingTime} min</div>
-                              <div><b>Setup:</b> {entry.setupTime} min</div>
+                              <div><b>Setup:</b> {entry.totalSetupTime} min</div>
                               <div><b>Grinding:</b> {entry.totalGrindingTime} min</div>
                               <div><b>Inspection:</b> {entry.inspectionTime} min</div>
                             </div>
@@ -647,6 +701,7 @@ function App() {
       <div className="halliburton-footer">
         &copy; {new Date().getFullYear()} Halliburton. All rights reserved.
       </div>
+      {/* Remove FMJCalculator from here, as it's now integrated */}
     </div>
   )
 }
