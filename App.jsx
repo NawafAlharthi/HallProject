@@ -235,7 +235,7 @@ function App() {
       <div className="halliburton-header">
         HALLIBURTON
       </div>
-      <div className="container mx-auto px-4 py-8 pb-32">
+      <div className="container mx-auto px-4 py-8 pb-8">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
