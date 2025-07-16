@@ -70,6 +70,8 @@ function App() {
   }
 
   const calculateTime = () => {
+    const inspectionTimePerFeature = 2.0;
+    const totalInspectionTime = inspectionTimePerFeature * numberOfFeatures;
     setIsCalculating(true)
     setProgress(0)
     
@@ -103,19 +105,23 @@ function App() {
           }
 
           // Calculate grinding intervals and time
-          const grindingIntervals = Math.ceil(lengthToDrill / grindingInterval)
-          const grindingTime = grindingIntervals * 7.0
+          const grindingIntervals = Math.ceil(numberOfFeatures / grindingInterval);
+          const grindingTime = grindingIntervals * 7.0;
+
+          const grindingTimePerFeature = grindingTime / numberOfFeatures;
+          const totalGrindingTime = grindingTime; // total for all features
 
           // Setup time (per feature)
           const setupTimePerFeature = 5.0
           const totalSetupTime = setupTimePerFeature * numberOfFeatures
 
-          const inspectionTime = 2.0
+          // Inspection time (per feature)
+          const inspectionTimePerFeature = 2.0;
+          const totalInspectionTime = inspectionTimePerFeature * numberOfFeatures;
 
           // Total time for all features
-          const totalCuttingTime = cuttingTime * numberOfFeatures
-          const totalGrindingTime = grindingTime
-          const totalInspectionTime = inspectionTime
+          const totalCuttingTime = cuttingTime * numberOfFeatures;
+          // Removed duplicate declaration of totalGrindingTime
 
           // FMJ Port Time logic
           let fmjPortTime = 0;
@@ -129,14 +135,22 @@ function App() {
 
           const totalTime = totalCuttingTime + totalGrindingTime + totalSetupTime + totalInspectionTime + fmjPortTime;
 
+          // Debug log for grinding time values
+          console.log('DEBUG grinding:', {
+            grindingTimePerFeature,
+            totalGrindingTime,
+            numberOfFeatures
+          });
+
           setResults({
             cuttingTimePerFeature: cuttingTime.toFixed(2),
             totalCuttingTime: totalCuttingTime.toFixed(2),
             setupTimePerFeature: setupTimePerFeature.toFixed(2),
             totalSetupTime: totalSetupTime.toFixed(2),
-            grindingTimePerFeature: (grindingTime / grindingIntervals).toFixed(2),
+            grindingTimePerFeature: grindingTimePerFeature.toFixed(2),
             totalGrindingTime: totalGrindingTime.toFixed(2),
-            inspectionTime: totalInspectionTime.toFixed(2),
+            inspectionTimePerFeature: inspectionTimePerFeature.toFixed(2),
+            totalInspectionTime: totalInspectionTime.toFixed(2),
             toolWearAdditionalTime: "0.00",
             totalStandardTime: totalTime.toFixed(2),
             numberOfFeatures: numberOfFeatures,
@@ -205,14 +219,14 @@ function App() {
     { name: 'Cutting Time', value: parseFloat(results.totalCuttingTime), color: '#3b82f6' },
     { name: 'Setup Time', value: parseFloat(results.totalSetupTime), color: '#10b981' },
     { name: 'Grinding Time', value: parseFloat(results.totalGrindingTime), color: '#f59e0b' },
-    { name: 'Inspection Time', value: parseFloat(results.inspectionTime), color: '#ef4444' }
+    { name: 'Inspection Time', value: parseFloat(results.totalInspectionTime), color: '#ef4444' }
   ] : []
 
   const barData = results ? [
     { name: 'Cutting', time: parseFloat(results.totalCuttingTime) },
     { name: 'Setup', time: parseFloat(results.totalSetupTime) },
     { name: 'Grinding', time: parseFloat(results.totalGrindingTime) },
-    { name: 'Inspection', time: parseFloat(results.inspectionTime) }
+    { name: 'Inspection', time: parseFloat(results.totalInspectionTime) }
   ] : []
 
   return (
@@ -537,8 +551,12 @@ function App() {
                           <span className="font-semibold">{results.totalGrindingTime} min</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>Inspection Time:</span>
-                          <span className="font-semibold">{results.inspectionTime} min</span>
+                          <span>Inspection Time (per feature):</span>
+                          <span className="font-semibold">{results.inspectionTimePerFeature} min</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Total Inspection Time:</span>
+                          <span className="font-semibold">{results.totalInspectionTime} min</span>
                         </div>
                         {parseFloat(results.toolWearAdditionalTime) > 0 && (
                           <div className="flex justify-between">
@@ -684,7 +702,7 @@ function App() {
                               <div><b>Cutting:</b> {entry.totalCuttingTime} min</div>
                               <div><b>Setup:</b> {entry.totalSetupTime} min</div>
                               <div><b>Grinding:</b> {entry.totalGrindingTime} min</div>
-                              <div><b>Inspection:</b> {entry.inspectionTime} min</div>
+                              <div><b>Inspection:</b> {entry.totalInspectionTime} min</div>
                             </div>
                           </div>
                         </CardContent>
