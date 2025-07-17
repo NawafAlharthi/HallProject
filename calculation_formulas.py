@@ -58,13 +58,15 @@ class GunDrillTimeCalculator:
     def calculate_setup_time(self, 
                            drill_size: float, 
                            material_grade: str,
+                           length_to_drill: float,
                            custom_setup_time: Optional[float] = None) -> float:
         """
-        Calculate setup time based on drill size and material.
+        Calculate setup time based on drill size, material, and length.
         
         Args:
             drill_size: Diameter of the drill bit (mm)
             material_grade: Material type
+            length_to_drill: Total length to be drilled (mm)
             custom_setup_time: Override default setup time if provided
             
         Returns:
@@ -83,20 +85,26 @@ class GunDrillTimeCalculator:
             setup_time *= 1.2
             
         # Harder materials require more careful setup
-        if material_grade.lower() in ['steel', 'stainless steel', 'titanium']:
+        if material_grade.lower() in ["steel", "stainless steel", "titanium"]:
             setup_time *= 1.3
+            
+        # Length effect on setup time (e.g., longer parts might need more complex fixturing)
+        # This is a simplified linear scaling. Adjust as needed.
+        setup_time *= (1 + (length_to_drill / 1000) * 0.1) # 10% increase per meter of length
             
         return round(setup_time, 2)
     
     def calculate_grinding_time(self, 
                               drill_size: float,
+                              length_to_drill: float,
                               grinding_frequency: int = 10,
                               custom_grinding_time: Optional[float] = None) -> float:
         """
-        Calculate grinding time based on drill size and grinding frequency.
+        Calculate grinding time based on drill size, length, and grinding frequency.
         
         Args:
             drill_size: Diameter of the drill bit (mm)
+            length_to_drill: Total length to be drilled (mm)
             grinding_frequency: Number of holes before grinding (default: 10)
             custom_grinding_time: Override default grinding time if provided
             
@@ -115,18 +123,21 @@ class GunDrillTimeCalculator:
         elif drill_size > 8:
             grinding_time *= 1.2
             
-        # Adjust for grinding frequency (amortize over multiple operations)
-        grinding_time_per_operation = grinding_time / grinding_frequency
+        # Grinding frequency based on length (e.g., more grinding for longer drills)
+        # For simplicity, let's assume grinding is needed more frequently for longer drills.
+        # This is a simplified linear scaling. Adjust as needed.
+        grinding_time_per_operation = (grinding_time * (1 + (length_to_drill / 1000) * 0.05)) / grinding_frequency # 5% increase per meter of length
         
-        return round(grinding_time_per_operation, 2)
-    
+        return round(grinding_time_per_operation, 2)    
     def calculate_inspection_time(self, 
+                                length_to_drill: float,
                                 wall_thickness_inspection: bool = False,
                                 number_of_features: int = 1) -> float:
         """
-        Calculate inspection time based on inspection requirements.
+        Calculate inspection time based on inspection requirements and length.
         
         Args:
+            length_to_drill: Total length to be drilled (mm)
             wall_thickness_inspection: Whether wall thickness inspection is required
             number_of_features: Number of features to inspect
             
@@ -142,8 +153,10 @@ class GunDrillTimeCalculator:
         # Multiple features require proportional inspection time
         total_inspection_time = base_inspection_time * number_of_features
         
-        return round(total_inspection_time, 2)
-    
+        # Length effect on inspection time (e.g., longer parts might take longer to inspect)
+        total_inspection_time *= (1 + (length_to_drill / 1000) * 0.08) # 8% increase per meter of length
+        
+        return round(total_inspection_time, 2)    
     def calculate_total_standard_time(self, 
                                     drill_size: float,
                                     length_to_drill: float,
@@ -181,17 +194,16 @@ class GunDrillTimeCalculator:
         )
         
         setup_time = self.calculate_setup_time(
-            drill_size, material_grade, custom_setup_time
+            drill_size, material_grade, length_to_drill, custom_setup_time
         )
         
         grinding_time = self.calculate_grinding_time(
-            drill_size, grinding_frequency, custom_grinding_time
+            drill_size, length_to_drill, grinding_frequency, custom_grinding_time
         )
         
         inspection_time = self.calculate_inspection_time(
-            wall_thickness_inspection, number_of_features
-        )
-        
+            length_to_drill, wall_thickness_inspection, number_of_features
+        )        
         # Calculate per-feature time
         per_feature_time = cutting_time + grinding_time + (inspection_time / number_of_features)
         
@@ -231,9 +243,9 @@ class GunDrillTimeCalculator:
         material_factors = {
             'aluminum': 0.8,
             'steel': 1.0,
-            'stainless steel': 1.3,
+            'stainless steel': 1.5,  # Increased for harder material
             'cast iron': 1.1,
-            'titanium': 1.6,
+            'titanium': 1.8,  # Increased for harder material
             'brass': 0.9,
             'copper': 0.85
         }
@@ -410,13 +422,13 @@ class PowerAppsFormulas:
                         ),
                         1.3,
                         1.0
-                    )
+                    ),
+                    LengthFactor: (1 + (LengthToDrill / 1000) * 0.1) // 10% increase per meter of length
                 },
-                Round(BaseSetupTime * SizeFactor * MaterialFactor, 2)
+                Round(BaseSetupTime * SizeFactor * MaterialFactor * LengthFactor, 2)
             ),
             CustomSetupTime
-        )
-        """
+        )        """
     
     @staticmethod
     def grinding_time_formula():
@@ -434,13 +446,13 @@ class PowerAppsFormulas:
                 {
                     BaseGrindingTime: 2.5,
                     SizeFactor: If(DrillSize > 15, 1.4, If(DrillSize > 8, 1.2, 1.0)),
-                    GrindingFrequency: If(IsBlank(GrindingFreq), 10, GrindingFreq)
+                    GrindingFrequency: If(IsBlank(GrindingFreq), 10, GrindingFreq),
+                    LengthFactor: (1 + (LengthToDrill / 1000) * 0.05) // 5% increase per meter of length
                 },
-                Round((BaseGrindingTime * SizeFactor) / GrindingFrequency, 2)
+                Round((BaseGrindingTime * SizeFactor * LengthFactor) / GrindingFrequency, 2)
             ),
             CustomGrindingTime
-        )
-        """
+        )        """
     
     @staticmethod
     def total_time_formula():
@@ -457,7 +469,7 @@ class PowerAppsFormulas:
                 CuttingTimePerFeature: /* Use cutting_time_formula result */,
                 SetupTime: /* Use setup_time_formula result */,
                 GrindingTimePerFeature: /* Use grinding_time_formula result */,
-                InspectionTime: If(WallThicknessInspection, 1.0 * 1.8, 1.0) * NumberOfFeatures,
+                InspectionTime: If(WallThicknessInspection, 1.0 * 1.8, 1.0) * NumberOfFeatures * (1 + (LengthToDrill / 1000) * 0.08),
                 ToolWearFactor: If(ToolWearConsideration, 0.02, 0),
                 PerFeatureTimeWithWear: CuttingTimePerFeature * (1 + ToolWearFactor) + GrindingTimePerFeature,
                 TotalCuttingTime: PerFeatureTimeWithWear * NumberOfFeatures

@@ -87,9 +87,6 @@ function App() {
           const feedRate = parseFloat(formData.feedRate) || 0.8
           const numberOfFeatures = parseInt(formData.numberOfFeatures) || 1
 
-          // Cutting time (per feature)
-          const cuttingTime = lengthToDrill / feedRate
-
           // Determine material hardness
           const softMaterials = ['13CR', '41XX', 'Aluminum', 'Brass', 'Copper']
           const hardMaterials = ['25CR', 'Stainless Steel', 'Cast Iron', 'Titanium']
@@ -104,26 +101,27 @@ function App() {
             grindingInterval = parseFloat(formData.grindingIntervalOverride)
           }
 
-          // Calculate grinding intervals and time
-          const grindingIntervals = Math.ceil(numberOfFeatures / grindingInterval);
-          const grindingTime = grindingIntervals * 7.0;
+          // Calculate the number of operations per feature (ceil for partial intervals)
+          const operationsPerFeature = Math.ceil(lengthToDrill / grindingInterval);
+          const totalOperations = numberOfFeatures * operationsPerFeature;
 
-          const grindingTimePerFeature = grindingTime / numberOfFeatures;
-          const totalGrindingTime = grindingTime; // total for all features
+          // Setup time (per operation)
+          const setupTimePerOperation = 5.0;
+          const totalSetupTime = setupTimePerOperation * totalOperations;
 
-          // Setup time (per feature)
-          const setupTimePerFeature = 5.0
-          const totalSetupTime = setupTimePerFeature * numberOfFeatures
+          // Grinding time (per operation)
+          const grindingTimePerOperation = 7.0;
+          const totalGrindingTime = grindingTimePerOperation * totalOperations;
 
-          // Inspection time (per feature)
-          const inspectionTimePerFeature = 2.0;
-          const totalInspectionTime = inspectionTimePerFeature * numberOfFeatures;
+          // Inspection time (per operation)
+          const inspectionTimePerOperation = 2.0;
+          const totalInspectionTime = inspectionTimePerOperation * totalOperations;
 
-          // Total time for all features
+          // Cutting time (per feature, unchanged)
+          const cuttingTime = lengthToDrill / feedRate;
           const totalCuttingTime = cuttingTime * numberOfFeatures;
-          // Removed duplicate declaration of totalGrindingTime
 
-          // FMJ Port Time logic
+          // FMJ Port Time logic (unchanged)
           let fmjPortTime = 0;
           if (includeFMJPort) {
             if (lowChromeMaterials.includes(material)) {
@@ -137,7 +135,6 @@ function App() {
 
           // Debug log for grinding time values
           console.log('DEBUG grinding:', {
-            grindingTimePerFeature,
             totalGrindingTime,
             numberOfFeatures
           });
@@ -145,11 +142,11 @@ function App() {
           setResults({
             cuttingTimePerFeature: cuttingTime.toFixed(2),
             totalCuttingTime: totalCuttingTime.toFixed(2),
-            setupTimePerFeature: setupTimePerFeature.toFixed(2),
+            setupTimePerFeature: setupTimePerOperation.toFixed(2),
             totalSetupTime: totalSetupTime.toFixed(2),
-            grindingTimePerFeature: grindingTimePerFeature.toFixed(2),
+            grindingTimePerFeature: grindingTimePerOperation.toFixed(2),
             totalGrindingTime: totalGrindingTime.toFixed(2),
-            inspectionTimePerFeature: inspectionTimePerFeature.toFixed(2),
+            inspectionTimePerFeature: inspectionTimePerOperation.toFixed(2),
             totalInspectionTime: totalInspectionTime.toFixed(2),
             toolWearAdditionalTime: "0.00",
             totalStandardTime: totalTime.toFixed(2),
