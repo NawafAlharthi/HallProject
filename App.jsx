@@ -39,6 +39,8 @@ function App() {
   const [isCalculating, setIsCalculating] = useState(false)
   const [progress, setProgress] = useState(0)
   const [history, setHistory] = useState([])
+  // Add state for input errors
+  const [inputErrors, setInputErrors] = useState({});
 
   // Load history from localStorage on mount
   useEffect(() => {
@@ -63,11 +65,93 @@ function App() {
   const lowChromeMaterials = ['13CR', 'S13CR', '41XX'];
   const highChromeMaterials = ['25CR', 'INC-718', 'INC-925'];
 
+  // Add mapping for drill size to RPM and Feed Rate for each material group
+  const DRILL_TABLE = {
+    'Low Chrome': {
+      '0.299': { rpm: 2100, feed: 0.8 },
+      '0.250': { rpm: 2100, feed: 0.8 },
+      '0.187': { rpm: 2100, feed: 0.8 },
+      '0.200': { rpm: 2100, feed: 0.8 },
+      '0.375': { rpm: 2100, feed: 0.8 },
+      '0.630': { rpm: 900, feed: 0.6 },
+      '0.690': { rpm: 700, feed: 0.5 },
+      '0.750': { rpm: 700, feed: 0.5 },
+      '0.889': { rpm: 600, feed: 0.5 },
+    },
+    'High Chrome': {
+      '0.299': { rpm: 1100, feed: 0.35 },
+      '0.250': { rpm: 1100, feed: 0.35 },
+      '0.187': { rpm: 1100, feed: 0.35 },
+      '0.200': { rpm: 1100, feed: 0.35 },
+      '0.375': { rpm: 1100, feed: 0.35 },
+    },
+  };
+
+  const LOW_CHROME = ['13CR', 'S13CR', '41XX'];
+  const HIGH_CHROME = ['25CR', 'INC-718', 'INC-925'];
+
+  // Helper to get group
+  function getMaterialGroup(grade) {
+    if (LOW_CHROME.includes(grade)) return 'Low Chrome';
+    if (HIGH_CHROME.includes(grade)) return 'High Chrome';
+    return null;
+  }
+
+  // Helper to check if a value is a positive real number
+  function isPositiveNumber(val) {
+    return /^\d*\.?\d+$/.test(val) && parseFloat(val) > 0;
+  }
+
+  // Helper to check if all required fields are filled and valid
+  function isFormValid() {
+    // Required part details
+    const requiredPartDetails = [formData.partNumber, formData.partName, formData.materialGrade, formData.numberOfFeatures];
+    // Required drilling parameters
+    const requiredDrillParams = [formData.drillSize, formData.lengthToDrill, formData.rpm, formData.feedRate];
+    // Check for empty fields
+    if (requiredPartDetails.some(f => !f) || requiredDrillParams.some(f => !f)) return false;
+    // Check for errors
+    if (Object.values(inputErrors).some(e => e)) return false;
+    // Check for valid numbers in drilling parameters
+    if (!isPositiveNumber(formData.drillSize) || !isPositiveNumber(formData.lengthToDrill) || !isPositiveNumber(formData.rpm) || !isPositiveNumber(formData.feedRate) || !isPositiveNumber(formData.numberOfFeatures)) return false;
+    return true;
+  }
+
+  // Update handleInputChange to disallow non-numeric characters for numeric fields
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }))
+    // Validate negative values and non-numeric for numerical fields
+    const numericFields = [
+      'drillSize', 'lengthToDrill', 'rpm', 'feedRate', 'numberOfFeatures',
+      'grindingFrequency', 'customSetupTime', 'customGrindingTime', 'grindingIntervalOverride'
+    ];
+    let error = '';
+    if (numericFields.includes(field)) {
+      // Disallow non-numeric input except dot
+      if (!/^\d*\.?\d*$/.test(value) && value !== '') {
+        error = 'Only positive numbers are allowed.';
+      } else {
+        const num = parseFloat(value);
+        if (!isNaN(num) && num < 0) {
+          error = 'Value cannot be negative.';
+        }
+      }
+    }
+    setInputErrors(prev => ({ ...prev, [field]: error }));
+
+    setFormData(prev => {
+      let updated = { ...prev, [field]: value };
+      // If materialGrade or drillSize changes, auto-set RPM and Feed Rate
+      if ((field === 'materialGrade' || field === 'drillSize')) {
+        const grade = field === 'materialGrade' ? value : prev.materialGrade;
+        const drill = field === 'drillSize' ? value : prev.drillSize;
+        const group = getMaterialGroup(grade);
+        if (group && DRILL_TABLE[group][drill]) {
+          updated.rpm = DRILL_TABLE[group][drill].rpm.toString();
+          updated.feedRate = DRILL_TABLE[group][drill].feed.toString();
+        }
+      }
+      return updated;
+    });
   }
 
   const calculateTime = () => {
@@ -348,6 +432,7 @@ function App() {
                               value={formData.drillSize}
                               onChange={(e) => handleInputChange('drillSize', e.target.value)}
                             />
+                            {inputErrors.drillSize && <div className="text-red-600 text-xs mt-1">{inputErrors.drillSize}</div>}
                           </div>
                           <div>
                             <Label htmlFor="lengthToDrill">Length to Drill (in)</Label>
@@ -368,6 +453,7 @@ function App() {
                               value={formData.rpm}
                               onChange={(e) => handleInputChange('rpm', e.target.value)}
                             />
+                            {inputErrors.rpm && <div className="text-red-600 text-xs mt-1">{inputErrors.rpm}</div>}
                           </div>
                           <div>
                             <Label htmlFor="feedRate">Feed Rate (in/min)</Label>
@@ -377,6 +463,7 @@ function App() {
                               value={formData.feedRate}
                               onChange={(e) => handleInputChange('feedRate', e.target.value)}
                             />
+                            {inputErrors.feedRate && <div className="text-red-600 text-xs mt-1">{inputErrors.feedRate}</div>}
                           </div>
                         </div>
                       </CardContent>
@@ -399,6 +486,7 @@ function App() {
                             value={formData.customSetupTime}
                             onChange={(e) => handleInputChange('customSetupTime', e.target.value)}
                           />
+                          {inputErrors.customSetupTime && <div className="text-red-600 text-xs mt-1">{inputErrors.customSetupTime}</div>}
                         </div>
                         <div>
                           <Label htmlFor="customGrindingTime">Custom Grinding Time (min)</Label>
@@ -408,6 +496,7 @@ function App() {
                             value={formData.customGrindingTime}
                             onChange={(e) => handleInputChange('customGrindingTime', e.target.value)}
                           />
+                          {inputErrors.customGrindingTime && <div className="text-red-600 text-xs mt-1">{inputErrors.customGrindingTime}</div>}
                         </div>
                         <div>
                           <Label htmlFor="grindingFrequency">Grinding Frequency</Label>
@@ -420,6 +509,7 @@ function App() {
                             value={formData.grindingFrequency}
                             onChange={(e) => handleInputChange('grindingFrequency', e.target.value)}
                           />
+                          {inputErrors.grindingFrequency && <div className="text-red-600 text-xs mt-1">{inputErrors.grindingFrequency}</div>}
                         </div>
                       </div>
                       <Separator />
@@ -455,13 +545,14 @@ function App() {
                           value={formData.grindingIntervalOverride}
                           onChange={(e) => handleInputChange('grindingIntervalOverride', e.target.value)}
                         />
+                        {inputErrors.grindingIntervalOverride && <div className="text-red-600 text-xs mt-1">{inputErrors.grindingIntervalOverride}</div>}
                       </div>
                     </CardContent>
                   </div>
 
                   {/* Action Buttons */}
                   <div className="flex justify-center gap-4 mt-8">
-                    <Button className="btn-primary" onClick={calculateTime} disabled={isCalculating}>
+                    <Button className="btn-primary" onClick={calculateTime} disabled={!isFormValid() || isCalculating}>
                       {isCalculating ? <span className="spinner" /> : 'Calculate Time'}
                     </Button>
                     <Button variant="outline" onClick={resetForm} disabled={isCalculating}>
