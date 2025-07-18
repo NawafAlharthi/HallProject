@@ -21,13 +21,13 @@
 }
 
 body {
-  background: var(--background);
+  background: linear-gradient(135deg, #f8fafc 0%, #f3f4f6 100%);
   color: var(--foreground);
   font-family: 'Inter', 'Roboto', Arial, sans-serif;
 }
 
 .halliburton-header {
-  background: #fff;
+  background: linear-gradient(90deg, #fff 60%, #ffe5e5 100%);
   color: #CC0000;
   font-size: 2rem;
   font-weight: 700;
@@ -35,12 +35,13 @@ body {
   text-align: center;
   padding: 1.2rem 0 0.7rem 0;
   margin-bottom: 1.5rem;
-  box-shadow: 0 2px 8px 0 rgba(204,0,0,0.04);
+  box-shadow: 0 4px 16px 0 rgba(204,0,0,0.08);
   border-bottom: 2px solid #f3f4f6;
+  border-radius: 0 0 1.5rem 1.5rem;
 }
 
 .halliburton-footer {
-  background: #fff;
+  background: linear-gradient(90deg, #fff 60%, #ffe5e5 100%);
   color: #CC0000;
   text-align: center;
   padding: 0.5rem 0;
@@ -49,6 +50,7 @@ body {
   box-shadow: 0 -2px 8px 0 rgba(204,0,0,0.04);
   width: 100%;
   z-index: 50;
+  border-radius: 1.5rem 1.5rem 0 0;
 }
 
 .button, .btn-primary, .btn-primary:focus, .btn-primary:active {
@@ -66,13 +68,28 @@ body {
 }
 
 .card {
-  border: 1.5px solid #e5e7eb;
-  border-radius: 0.75rem;
+  border: none;
+  border-radius: 1.25rem;
   background: #fff;
   color: #222;
-  box-shadow: 0 4px 24px 0 rgba(0,0,0,0.10), 0 1.5px 6px 0 rgba(0,0,0,0.04);
-  margin-bottom: 2rem;
+  box-shadow: 0 6px 32px 0 rgba(0,0,0,0.10), 0 2px 8px 0 rgba(0,0,0,0.04);
+  margin-bottom: 2.5rem;
   padding: 2rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.25s, transform 0.18s;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 7px;
+  background: linear-gradient(180deg, #cc0000, #f59e0b);
+  border-radius: 1.25rem 0 0 1.25rem;
+}
+.card:hover {
+  box-shadow: 0 12px 40px 0 rgba(204,0,0,0.10), 0 4px 16px 0 rgba(0,0,0,0.06);
+  transform: translateY(-2px) scale(1.01);
 }
 
 /* Field grouping and whitespace */
@@ -148,7 +165,12 @@ label, .label, .text-contrast {
 
 /* Extra whitespace for section separation */
 .section {
-  margin-bottom: 2.5rem;
+  margin-bottom: 3rem;
+  transition: margin 0.2s;
+}
+
+input, select, .card, .btn-primary, .field-group, .TabsList, .results-card {
+  border-radius: 1rem !important;
 }
 
 /* Responsive adjustments for tab list */
