@@ -14,6 +14,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, 
 import './App.css'
 import FMJCalculator from './src/components/FMJCalculator'; 
 import { motion, AnimatePresence } from 'framer-motion';
+import * as XLSX from 'xlsx';
 
 function App() {
   const [activeTab, setActiveTab] = useState('calculator')
@@ -310,6 +311,62 @@ function App() {
     { name: 'Grinding', time: parseFloat(results.totalGrindingTime) },
     { name: 'Inspection', time: parseFloat(results.totalInspectionTime) }
   ] : []
+
+  // Add export to Excel handler
+  const handleExportToExcel = () => {
+    if (!results) return;
+    // Prepare data for Excel
+    const now = new Date();
+    const timestamp = now.toLocaleString();
+    const title = 'Gun Drill Machine Standard Time Calculation Results';
+    // Build rows
+    const rows = [
+      [title],
+      ['Exported:', timestamp],
+      [],
+      ['Part Details'],
+      ['Part Number', formData.partNumber],
+      ['Part Name', formData.partName],
+      ['Material Grade', formData.materialGrade],
+      ['Drill Size', formData.drillSize],
+      ['Length to Drill', formData.lengthToDrill],
+      ['RPM', formData.rpm],
+      ['Feed Rate', formData.feedRate],
+      ['Number of Features', results.numberOfFeatures],
+      [],
+      ['Calculation Results'],
+      ['Cutting Time (per feature)', results.cuttingTimePerFeature + ' min'],
+      ['Total Cutting Time', results.totalCuttingTime + ' min'],
+      ['Setup Time (per feature)', results.setupTimePerFeature + ' min'],
+      ['Total Setup Time', results.totalSetupTime + ' min'],
+      ['Grinding Time (per feature)', results.grindingTimePerFeature + ' min'],
+      ['Total Grinding Time', results.totalGrindingTime + ' min'],
+      ['Inspection Time (per feature)', results.inspectionTimePerFeature + ' min'],
+      ['Total Inspection Time', results.totalInspectionTime + ' min'],
+      ['Tool Wear Additional Time', results.toolWearAdditionalTime + ' min'],
+      ['FMJ Port Time', results.fmjPortTime ? results.fmjPortTime + ' min' : ''],
+      ['Total Standard Time', results.totalStandardTime + ' min'],
+    ];
+    // Create worksheet
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    // Bold title and section headers
+    const boldRows = [0, 3, 12];
+    boldRows.forEach(r => {
+      const cell = ws[XLSX.utils.encode_cell({ r, c: 0 })];
+      if (cell) cell.s = { font: { bold: true, sz: r === 0 ? 14 : 12 } };
+    });
+    // Merge title row
+    ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }];
+    // Auto-size columns
+    ws['!cols'] = [
+      { wch: 32 },
+      { wch: 24 },
+    ];
+    // Create workbook and export
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Calculation Results');
+    XLSX.writeFile(wb, 'calculation_results.xlsx');
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -710,7 +767,7 @@ function App() {
 
                       {/* Action Buttons */}
                       <div className="flex justify-center gap-4">
-                        <Button>
+                        <Button onClick={handleExportToExcel}>
                           <Download className="w-4 h-4 mr-2" />
                           Export to Excel
                         </Button>
