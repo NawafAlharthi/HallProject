@@ -31,7 +31,7 @@ function App() {
     wallThicknessInspection: false,
     customSetupTime: '',
     customGrindingTime: '',
-    grindingFrequency: '10',
+    grindingFrequency: '', // initially empty
     grindingIntervalOverride: '' // NEW: user can override grinding interval in inches
   })
   const [includeFMJPort, setIncludeFMJPort] = useState(false);
@@ -108,17 +108,17 @@ function App() {
     // Required part details
     const requiredPartDetails = [formData.partNumber, formData.partName, formData.materialGrade, formData.numberOfFeatures];
     // Required drilling parameters
-    const requiredDrillParams = [formData.drillSize, formData.lengthToDrill, formData.rpm, formData.feedRate];
+    const requiredDrillParams = [formData.drillSize, formData.lengthToDrill, formData.rpm, formData.feedRate, formData.grindingFrequency];
     // Check for empty fields
     if (requiredPartDetails.some(f => !f) || requiredDrillParams.some(f => !f)) return false;
     // Check for errors
     if (Object.values(inputErrors).some(e => e)) return false;
     // Check for valid numbers in drilling parameters
-    if (!isPositiveNumber(formData.drillSize) || !isPositiveNumber(formData.lengthToDrill) || !isPositiveNumber(formData.rpm) || !isPositiveNumber(formData.feedRate) || !isPositiveNumber(formData.numberOfFeatures)) return false;
+    if (!isPositiveNumber(formData.drillSize) || !isPositiveNumber(formData.lengthToDrill) || !isPositiveNumber(formData.rpm) || !isPositiveNumber(formData.feedRate) || !isPositiveNumber(formData.numberOfFeatures) || !isPositiveNumber(formData.grindingFrequency)) return false;
     return true;
   }
 
-  // Update handleInputChange to disallow non-numeric characters for numeric fields
+  // Update handleInputChange to auto-set grindingFrequency by material grade
   const handleInputChange = (field, value) => {
     // Validate negative values and non-numeric for numerical fields
     const numericFields = [
@@ -132,8 +132,8 @@ function App() {
         error = 'Only positive numbers are allowed.';
       } else {
         const num = parseFloat(value);
-        if (!isNaN(num) && num < 0) {
-          error = 'Value cannot be negative.';
+        if (!isNaN(num) && num <= 0) {
+          error = 'Value must be a positive number.';
         }
       }
     }
@@ -141,14 +141,23 @@ function App() {
 
     setFormData(prev => {
       let updated = { ...prev, [field]: value };
-      // If materialGrade or drillSize changes, auto-set RPM and Feed Rate
-      if ((field === 'materialGrade' || field === 'drillSize')) {
-        const grade = field === 'materialGrade' ? value : prev.materialGrade;
-        const drill = field === 'drillSize' ? value : prev.drillSize;
-        const group = getMaterialGroup(grade);
-        if (group && DRILL_TABLE[group][drill]) {
-          updated.rpm = DRILL_TABLE[group][drill].rpm.toString();
-          updated.feedRate = DRILL_TABLE[group][drill].feed.toString();
+      // If materialGrade changes, auto-set grindingFrequency and RPM/Feed
+      if (field === 'materialGrade') {
+        const group = getMaterialGroup(value);
+        if (group === 'Low Chrome') updated.grindingFrequency = '10';
+        else if (group === 'High Chrome') updated.grindingFrequency = '5';
+        // Also auto-set RPM/Feed if drillSize is present
+        if (prev.drillSize && DRILL_TABLE[group] && DRILL_TABLE[group][prev.drillSize]) {
+          updated.rpm = DRILL_TABLE[group][prev.drillSize].rpm.toString();
+          updated.feedRate = DRILL_TABLE[group][prev.drillSize].feed.toString();
+        }
+      }
+      // If drillSize changes, auto-set RPM/Feed
+      if (field === 'drillSize') {
+        const group = getMaterialGroup(prev.materialGrade);
+        if (group && DRILL_TABLE[group][value]) {
+          updated.rpm = DRILL_TABLE[group][value].rpm.toString();
+          updated.feedRate = DRILL_TABLE[group][value].feed.toString();
         }
       }
       return updated;
@@ -211,9 +220,9 @@ function App() {
           let fmjPortTime = 0;
           if (includeFMJPort) {
             if (lowChromeMaterials.includes(material)) {
-              fmjPortTime = 30;
+              fmjPortTime = 30 * numberOfFeatures;
             } else if (highChromeMaterials.includes(material)) {
-              fmjPortTime = 45;
+              fmjPortTime = 45 * numberOfFeatures;
             }
           }
 
@@ -282,7 +291,7 @@ function App() {
       wallThicknessInspection: false,
       customSetupTime: '',
       customGrindingTime: '',
-      grindingFrequency: '10',
+      grindingFrequency: '',
       grindingIntervalOverride: ''
     })
     setResults(null)
