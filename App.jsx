@@ -416,7 +416,6 @@ function App() {
     <div className="min-h-screen bg-white">
       {/* Halliburton Header */}
       <div className="halliburton-header flex items-center gap-3 p-4 justify-center text-center">
-        <img src="favicon_io/android-chrome-192x192.png" alt="Halliburton Logo" className="h-10 w-10 rounded-full" />
         <span className="text-2xl font-bold text-red-700">HALLIBURTON</span>
       </div>
       <div className="container mx-auto px-4 py-8 pb-8">
